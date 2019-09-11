@@ -1,0 +1,24 @@
+#!/bin/bash
+
+api() { curl -s 127.0.0.1:14002/api/$1; } 
+DASHDATA=`api "dashboard"`
+
+printf "node id : %s \n" `echo $DASHDATA | jq -r .data.nodeID`
+printf "version : %s.%s.%s \n" `echo $DASHDATA | jq -r .data.version.major` `echo $DASHDATA | jq -r .data.version.minor` `echo $DASHDATA | jq -r .data.version.patch`
+printf "upToDate: %s \n" `echo $DASHDATA | jq -r .data.upToDate`
+printf "\n"
+
+printf "bandwidth avail: %8.3fGB used: %-5.3fGB  ingress: %4.1fMB  egress: %4.1fMB \n" `echo $DASHDATA | jq -r '.data.bandwidth.available'; echo $DASHDATA | jq -r '.data.bandwidth.used'; echo $DASHDATA | jq -r '.data.bandwidth.ingress.usage / 1024 / 1024'; echo $DASHDATA | jq -r '.data.bandwidth.egress.usage / 1024 / 1024'`
+printf "     disk avail: %8.3fGB used: %-5.3fGB \n" `echo $DASHDATA | jq -r .data.diskSpace.available` `echo $DASHDATA | jq -r .data.diskSpace.used`
+printf "\n"
+
+FMT='%-6s %-9s %-8s %-9s %-8s\n'
+printf "$FMT" sat-id audits score uptime score
+
+DATAFMT='%-6s %-4d/%-4d %-7.6f %4d/%-4d %-7.6f \n'
+for sat in `echo $DASHDATA | jq -r '.data.satellites | sort[]'`
+do
+  SATDATA=`api "satellite/$sat"`
+  printf "$DATAFMT" `echo $sat | cut -c1-6 ; echo $SATDATA| jq -r '.data.audit.totalCount'; echo $SATDATA| jq -r '.data.audit.successCount'; echo $SATDATA| jq -r '.data.audit.score'; echo $SATDATA| jq -r '.data.uptime.totalCount'; echo $SATDATA| jq -r '.data.uptime.successCount'; echo $SATDATA| jq -r '.data.uptime.score'  ` 
+done
+
