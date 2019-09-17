@@ -1,11 +1,10 @@
 #!/bin/bash
 
-api() { curl -s 127.0.0.1:14002/api/$1; }
+api() { curl -s 127.0.0.1:14002/api/$1; } 
 DASHDATA=`api "dashboard"`
 
 printf "node id : %s \n" `echo $DASHDATA | jq -r .data.nodeID`
-printf "version : %s.%s.%s \n" `echo $DASHDATA | jq -r .data.version.major` `echo $DASHDATA | jq -r .data.version.minor` `echo $DASHDATA | jq -r .data.version.patch`
-printf "upToDate: %s \n" `echo $DASHDATA | jq -r .data.upToDate`
+printf "version : %s.%s.%s (%s)\n" `echo $DASHDATA | jq -r '.data.version.major, .data.version.minor, .data.version.patch, (if .data.upToDate then "latest" else "old" end)'`
 printf "\n"
 
 printf "bandwidth avail: %8.3fGB used: %-5.3fGB  ingress: %4.1fMB  egress: %4.1fMB \n" `echo $DASHDATA | jq -r '.data.bandwidth.available'; echo $DASHDATA | jq -r '.data.bandwidth.used'; echo $DASHDATA | jq -r '.data.bandwidth.ingress.usage / 1024 / 1024'; echo $DASHDATA | jq -r '.data.bandwidth.egress.usage / 1024 / 1024'`
@@ -21,7 +20,5 @@ do
   SATDATA=`api "satellite/$sat"`
   printf "$DATAFMT" `echo $sat | cut -c1-6 ; echo $SATDATA| jq -r '.data.audit.totalCount'; echo $SATDATA| jq -r '.data.audit.successCount'; echo $SATDATA| jq -r '.data.audit.score'; echo $SATDATA| jq -r '.data.uptime.totalCount'; echo $SATDATA| jq -r '.data.uptime.successCount'; echo $SATDATA| jq -r '.data.uptime.score';\
           echo $SATDATA| jq -r '.data | if .storageDaily then (.storageDaily | sort_by(.timestamp) | map({timestamp: .timestamp[0:10], atRestTotal: .atRestTotal} ) | group_by(.timestamp)[-1] | .[0].timestamp, ((map(.atRestTotal) | add)/1024/1024)) else "____-__-__ 0" end';\
-          echo $SATDATA| jq -r '.data | if .bandwidthDaily then (.bandwidthDaily | sort_by(.from) | map({from: .from[0:10], egress: .egress.usage, ingress: .ingress.usage})| group_by(.from)[-1] | .[0].from,  (map(.egress) | add /1024/1024), (map(.ingress) | add /1024 /1024)) else "____-__-__ 0 0" end'  `
-#  .storageDaily | sort_by(.timestamp)[-1] | .timestamp[0:10], (.atRestTotal / 1024 / 1024)
+          echo $SATDATA| jq -r '.data | if .bandwidthDaily then (.bandwidthDaily | sort_by(.from) | map({from: .from[0:10], egress: .egress.usage, ingress: .ingress.usage})| group_by(.from)[-1] | .[0].from,  (map(.egress) | add /1024/1024), (map(.ingress) | add /1024 /1024)) else "____-__-__ 0 0" end'  `  
 done
-
