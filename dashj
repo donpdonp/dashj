@@ -7,19 +7,17 @@ printf "node id : %s \n" `echo $DASHDATA | jq -r .data.nodeID`
 printf "version : %s.%s.%s (%s)\n" `echo $DASHDATA | jq -r '.data.version.major, .data.version.minor, .data.version.patch, (if .data.upToDate then "latest" else "old" end)'`
 printf "\n"
 
-printf "bandwidth avail: %8.3fGB used: %-5.3fGB  ingress: %4.1fMB  egress: %4.1fMB \n" `echo $DASHDATA | jq -r '.data.bandwidth.available'; echo $DASHDATA | jq -r '.data.bandwidth.used'; echo $DASHDATA | jq -r '.data.bandwidth.ingress.usage / 1024 / 1024'; echo $DASHDATA | jq -r '.data.bandwidth.egress.usage / 1024 / 1024'`
-printf "     disk avail: %8.3fGB used: %-5.3fGB \n" `echo $DASHDATA | jq -r .data.diskSpace.available` `echo $DASHDATA | jq -r .data.diskSpace.used`
+printf "bandwidth avail: %8.3fGB used: %-5.3fGB \n" `echo $DASHDATA | jq -r '.data.bandwidth| .available, .used'`
+printf "     disk avail: %8.3fGB used: %-5.3fGB \n" `echo $DASHDATA | jq -r '.data.diskSpace| .available, .used'`
 printf "\n"
 
 FMT='%-6s %-9s %-8s %-9s %-8s %-10s %-10s %-10s %-9s %-9s\n'
-printf "$FMT" sat-id audits score uptime score storageDay atRest bndwdthDay egress ingress
+printf "$FMT" sat-id audits score uptime score storage bandwidth
 
-DATAFMT='%-6s %-4d/%-4d %-7.6f %4d/%-4d %-7.6f %10s %8.3fMB %-10s %7.3fMB %7.3fMB \n'
-for sat in `echo $DASHDATA | jq -r '.data.satellites | sort[]'`
+DATAFMT='%-6s %-4d/%-4d %-7.6f %4d/%-4d %-7.6f %8.3fGB %8.3fGB \n'
+for sat in `echo $DASHDATA | jq -r '.data.satellites | map(.id) | sort[]'`
 do
   SATDATA=`api "satellite/$sat"`
-  printf "$DATAFMT" `echo $sat | cut -c1-6 ; echo $SATDATA| jq -r '.data.audit.totalCount'; echo $SATDATA| jq -r '.data.audit.successCount'; echo $SATDATA| jq -r '.data.audit.score'; echo $SATDATA| jq -r '.data.uptime.totalCount'; echo $SATDATA| jq -r '.data.uptime.successCount'; echo $SATDATA| jq -r '.data.uptime.score';\
-          echo $SATDATA| jq -r '.data | if .storageDaily then (.storageDaily | sort_by(.timestamp) | map({timestamp: .timestamp[0:10], atRestTotal: .atRestTotal} ) | group_by(.timestamp)[-1] | .[0].timestamp, ((map(.atRestTotal) | add)/1024/1024)) else "____-__-__ 0" end';\
-          echo $SATDATA| jq -r '.data | if .bandwidthDaily then (.bandwidthDaily | sort_by(.from) | map({from: .from[0:10], egress: .egress.usage, ingress: .ingress.usage})| group_by(.from)[-1] | .[0].from,  (map(.egress) | add /1024/1024), (map(.ingress) | add /1024 /1024)) else "____-__-__ 0 0" end'  `  
+  printf "$DATAFMT" `echo $sat | cut -c1-6 ; echo $SATDATA| jq -r '.data | .audit.totalCount, .audit.successCount, .audit.score, .uptime.totalCount, .uptime.successCount, .uptime.score, .storageSummary/1024/1024/1024, .bandwidthSummary/1024/1024/1024'`
 done
 
