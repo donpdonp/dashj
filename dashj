@@ -11,7 +11,7 @@ printf "bandwidth avail: %8.3fGB used: %-5.3fGB \n" `echo $DASHDATA | jq -r '.da
 printf "     disk avail: %8.3fGB used: %-5.3fGB \n" `echo $DASHDATA | jq -r '.data.diskSpace| .available, .used'`
 printf "\n"
 
-FMT='%-6s %-9s %-8s %-9s %-8s %-22s %-13s %-10s %-15s %18s %s %s\n'
+FMT='%-6s %-9s %-8s %-9s %-8s \n'
 printf "$FMT" sat-id audits score uptime score 
 
 DATAFMT='%-6s %-4d/%-4d %-7.6f %4d/%-4d %-7.6f \n       storage total: %9.3fGB lastday: %10s %9.3fMB \n     bandwidth total: %9.3fGB lastday: %10s %9.3fMB(in) %9.3fMB(out)  \n'
