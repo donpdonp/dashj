@@ -14,14 +14,14 @@ printf "\n"
 FMT='%-6s %-9s %-8s %-9s %-8s \n'
 printf "$FMT" sat-id audits score uptime score 
 
-DATAFMT='%-6s %-4d/%-4d %-7.6f %4d/%-4d %-7.6f \n       storage total: %9.3fGB lastday: %10s %9.3fMB \n     bandwidth total: %9.3fGB lastday: %10s %9.3fMB(in) %9.3fMB(out)  \n'
+DATAFMT='%-6s %-4d/%-4d %-7.6f %4d/%-4d %-7.6f \n       storage total: %9.3fGB lastday: %10s %7.3fGB \n     bandwidth total: %9.3fGB lastday: %10s %7.3fMB(in) %7.3fMB(out)  \n'
 for sat in `echo $DASHDATA | jq -r '.data.satellites | map(.id) | sort[]'`
 do
   SATDATA=`api "satellite/$sat"`
   printf "$DATAFMT" `echo $sat | cut -c1-6 ; echo $SATDATA| jq -r '.data | .audit.totalCount, .audit.successCount, .audit.score, .uptime.totalCount, .uptime.successCount, .uptime.score,\
 	  .storageSummary/1024/1024/1024,\
-	  if .storageDaily then (.storageDaily | sort_by(.intervalStart) | map({intervalStart: .intervalStart[0:10], atRestTotal: .atRestTotal} ) | group_by(.intervalStart)[-1] | .[0].intervalStart, ((map(.atRestTotal) | add)/1024/1024)) else "____-__-__ 0" end,\
+	  if .storageDaily then (.storageDaily | sort_by(.intervalStart) | map({intervalStart: .intervalStart[0:10], atRestTotal: .atRestTotal} ) | group_by(.intervalStart)[-1] | .[0].intervalStart, ((map(.atRestTotal) | add)/1024/1024/1024)) else "____-__-__ 0" end,\
 	  .bandwidthSummary/1024/1024/1024,\
-          if .bandwidthDaily then (.bandwidthDaily | sort_by(.intervalStart) | map({intervalStart: .intervalStart[0:10], egress: .egress.usage, ingress: .ingress.usage})| group_by(.intervalStart)[-1] | .[0].intervalStart,  (map(.egress) | add /1024/1024), (map(.ingress) | add /1024 /1024)) else "____-__-__ 0 0" end'`
+          if .bandwidthDaily then (.bandwidthDaily | sort_by(.intervalStart) | map({intervalStart: .intervalStart[0:10], egress: .egress.usage, ingress: .ingress.usage})| group_by(.intervalStart)[-1] | .[0].intervalStart,  (map(.egress) | add /1024/1024), (map(.ingress) | add /1024/1024)) else "____-__-__ 0 0" end'`
 done
 
