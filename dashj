@@ -14,7 +14,7 @@ printf "\n"
 FMT='%-6s %-9s %-8s %-9s %-8s \n'
 printf "$FMT" sat-id audits score uptime score 
 
-DATAFMT='%-6s %-4d/%-4d %-7.6f %4d/%-4d %-7.6f \n       storage total: %9.3fGBhrs lastday: %10s %7.3fGBhrs \n     bandwidth total: %9.3fGB lastday: %10s %7.3fMB(in) %7.3fMB(out)  \n'
+DATAFMT='%-6s %4d/%-4d %-7.6f %4d/%-4d %-7.6f \n       storage total: %9.3fGBhrs lastday: %10s %9.3fGBhrs \n     bandwidth total: %9.3fGB    lastday: %10s %9.3fMB(in) %7.3fMB(out)  \n'
 for sat in `echo $DASHDATA | jq -r '.data.satellites | map(.id) | sort[]'`
 do
   SATDATA=`api "satellite/$sat"`
