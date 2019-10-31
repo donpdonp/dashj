@@ -4,7 +4,7 @@ api() { curl -s 127.0.0.1:14002/api/$1; }
 DASHDATA=`api "dashboard"`
 
 printf "node id : %s \n" `echo $DASHDATA | jq -r '.data.nodeID'`
-printf "version : %s.%s.%s (%s) ping: %1.0f seconds ago\n" `echo $DASHDATA | jq -r '.data | .version.major, .version.minor, .version.patch, (if .upToDate then "latest" else "old" end), now - (.lastPinged[0:19] + "Z" | fromdate) + ((.lastPinged[-6:-3] | tonumber) * 60 * 60)'`
+printf "version : %s (%s) ping: %1.0f seconds ago\n" `echo $DASHDATA | jq -r '.data | .version, (if .upToDate then "latest" else "old" end), now - (.lastPinged[0:19] + "Z" | fromdate) + ((.lastPinged[-6:-3] | tonumber) * 60 * 60)'`
 printf "\n"
 
 printf "bandwidth avail: %8.3fGB used: %-5.3fGB \n" `echo $DASHDATA | jq -r '.data.bandwidth| .available/1024/1024/1024, .used/1024/1024/1024'`
