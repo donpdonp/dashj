@@ -1,27 +1,26 @@
 #!/bin/bash
 
 api() { curl -s 127.0.0.1:14002/api/$1; } 
-DASHDATA=`api "dashboard"`
+DASHDATA=`api "sno/"`
 
-printf "node id : %s \n" `echo $DASHDATA | jq -r '.data.nodeID'`
-printf "version : %s (%s) ping: %1.0f seconds ago\n" `echo $DASHDATA | jq -r '.data | .version, (if .upToDate then "latest" else "old" end), now - (.lastPinged[0:19] + "Z" | fromdate) + ((.lastPinged[-6:-3] | tonumber) * 60 * 60)'`
+printf "node id : %s \n" `echo $DASHDATA | jq -r '.nodeID'`
+printf "version : %s (%s) ping: %1.0f seconds ago\n" `echo $DASHDATA | jq -r ' .version, (if .upToDate then "latest" else "old" end), now - (.lastPinged[0:19] + "Z" | fromdate) + ((.lastPinged[-6:-3] | tonumber) * 60 * 60)'`
 printf "\n"
 
-printf "bandwidth avail: %8.3fGB used: %-5.3fGB \n" `echo $DASHDATA | jq -r '.data.bandwidth| .available/1024/1024/1024, .used/1024/1024/1024'`
-printf "     disk avail: %8.3fGB used: %-5.3fGB \n" `echo $DASHDATA | jq -r '.data.diskSpace| .available/1024/1024/1024, .used/1024/1024/1024'`
+printf "bandwidth avail: %8.3fGB used: %-5.3fGB \n" `echo $DASHDATA | jq -r '.bandwidth| .available/1024/1024/1024, .used/1024/1024/1024'`
+printf "     disk avail: %8.3fGB used: %-5.3fGB \n" `echo $DASHDATA | jq -r '.diskSpace| .available/1024/1024/1024, .used/1024/1024/1024'`
 printf "\n"
 
 FMT='%-6s %-9s %-8s %-9s %-8s \n'
-printf "$FMT" sat-id audits score uptime score 
+printf "$FMT" sat-id audits score uptime score
 
 DATAFMT='%-6s %4d/%-4d %-7.6f %4d/%-4d %-7.6f \n       storage total: %9.3fGBhrs lastday: %10s %9.3fGBhrs \n     bandwidth total: %9.3fGB    lastday: %10s %9.3fMB(in) %7.3fMB(out)  \n'
-for sat in `echo $DASHDATA | jq -r '.data.satellites | map(.id) | sort[]'`
+for sat in `echo $DASHDATA | jq -r '.satellites | map(.id) | sort[]'`
 do
-  SATDATA=`api "satellite/$sat"`
-  printf "$DATAFMT" `echo $sat | cut -c1-6 ; echo $SATDATA| jq -r '.data | .audit.totalCount, .audit.successCount, .audit.score, .uptime.totalCount, .uptime.successCount, .uptime.score,\
-	  .storageSummary/1024/1024/1024,\
-	  if .storageDaily then (.storageDaily | sort_by(.intervalStart) | map({intervalStart: .intervalStart[0:10], atRestTotal: .atRestTotal} ) | group_by(.intervalStart)[-1] | .[0].intervalStart, ((map(.atRestTotal) | add)/1024/1024/1024)) else "____-__-__ 0" end,\
-	  .bandwidthSummary/1024/1024/1024,\
+  SATDATA=`api "sno/satellite/$sat"`
+  printf "$DATAFMT" `echo $sat | cut -c1-6 ; echo $SATDATA| jq -r '  .audit.totalCount, .audit.successCount, .audit.score, .uptime.totalCount, .uptime.successCount, .uptime.score,\
+          .storageSummary/1024/1024/1024,\
+          if .storageDaily then (.storageDaily | sort_by(.intervalStart) | map({intervalStart: .intervalStart[0:10], atRestTotal: .atRestTotal} ) | group_by(.intervalStart)[-1] | .[0].intervalStart, ((map(.atRestTotal) | add)/1024/1024/1024)) else "____-__-__ 0" end,\
+          .bandwidthSummary/1024/1024/1024,\
           if .bandwidthDaily then (.bandwidthDaily | sort_by(.intervalStart) | map({intervalStart: .intervalStart[0:10], egress: .egress.usage, ingress: .ingress.usage})| group_by(.intervalStart)[-1] | .[0].intervalStart,  (map(.egress) | add /1024/1024), (map(.ingress) | add /1024/1024)) else "____-__-__ 0 0" end'`
 done
-
